@@ -1,0 +1,123 @@
+{
+  "info": {
+    "arch": "wasm32",
+    "platform": "emscripten_3_1_32",
+    "version": "0.23.2",
+    "python": "3.11.2"
+  },
+  "packages": {
+    "pandas": {
+      "name": "pandas",
+      "version": "1.5.3",
+      "file_name": "pandas-1.5.3-cp311-cp311-emscripten_3_1_32_wasm32.whl",
+      "install_dir": "site",
+      "sha256": "630ac2e0850b345f8b2d978d36468dee5b00aadd2a6c596e6dd7656491052a94",
+      "package_type": "package",
+      "imports": ["pandas"],
+      "depends": ["numpy", "python-dateutil", "pytz"],
+      "unvendored_tests": true
+    },
+    "numpy": {
+      "name": "numpy",
+      "version": "1.24.2",
+      "file_name": "numpy-1.24.2-cp311-cp311-emscripten_3_1_32_wasm32.whl",
+      "install_dir": "site",
+      "sha256": "7f8dd3ba24b50410375ad5505c67e26dee230aeec94bd0cef5dc2bdccd945569",
+      "package_type": "package",
+      "imports": ["numpy"],
+      "depends": [],
+      "unvendored_tests": true
+    },
+    "python-dateutil": {
+      "name": "python-dateutil",
+      "version": "2.8.2",
+      "file_name": "python_dateutil-2.8.2-py2.py3-none-any.whl",
+      "install_dir": "site",
+      "sha256": "11c7712e243c4d78e98c259f0937a3431c1f584eff45da4e75d7bcf3e52c1403",
+      "package_type": "package",
+      "imports": ["dateutil"],
+      "depends": ["six"]
+    },
+    "six": {
+      "name": "six",
+      "version": "1.16.0",
+      "file_name": "six-1.16.0-py2.py3-none-any.whl",
+      "install_dir": "site",
+      "sha256": "61cd0e5b8bd38dcd22a84f457295ac0085284bebf68c6372de3e2e79f52c2f5c",
+      "package_type": "package",
+      "imports": ["six"],
+      "depends": []
+    },
+    "pytz": {
+      "name": "pytz",
+      "version": "2023.3",
+      "file_name": "pytz-2023.3-py2.py3-none-any.whl",
+      "install_dir": "site",
+      "sha256": "b3e7537895d0a8c265c50957ae847c878573a79a8ed287ed0f3268593a45c9b6",
+      "package_type": "package",
+      "imports": ["pytz"],
+      "depends": []
+    },
+    "opencv-python": {
+      "name": "opencv-python",
+      "version": "4.7.0.72",
+      "file_name": "opencv_python-4.7.0.72-cp311-cp311-emscripten_3_1_32_wasm32.whl",
+      "install_dir": "site",
+      "sha256": "e0c61946736462e67b5d3c223a682cd73add6e020db57ad5bb7c3f9192410a7f",
+      "package_type": "package",
+      "imports": ["cv2"],
+      "depends": ["numpy"]
+    },
+    "click": {
+      "name": "click",
+      "version": "8.1.3",
+      "file_name": "click-8.1.3-py3-none-any.whl",
+      "install_dir": "site",
+      "sha256": "d3e354afc7e845ef9945bcefa27b16ed52eaa7d71fa2d4dc5144d301bcea7238",
+      "package_type": "package",
+      "imports": ["click"],
+      "depends": []
+    },
+    "cryptography": {
+      "name": "cryptography",
+      "version": "39.0.2",
+      "file_name": "cryptography-39.0.2-cp311-cp311-emscripten_3_1_32_wasm32.whl",
+      "install_dir": "site",
+      "sha256": "f368dc68c53ec705524d083d1a1c35584fc46e79f904966f361e08b0be539029",
+      "package_type": "package",
+      "imports": ["cryptography"],
+      "depends": ["openssl", "six", "cffi"]
+    },
+    "openssl": {
+      "name": "openssl",
+      "version": "1.1.1n",
+      "file_name": "openssl-1.1.1n.zip",
+      "install_dir": "dynlib",
+      "sha256": "f7298aa6920b0f3990bf9892cb0472f8be31663c026e36fe5ba6ce8d90388d84",
+      "package_type": "shared_library",
+      "imports": [],
+      "shared_library": true,
+      "depends": []
+    },
+    "cffi": {
+      "name": "cffi",
+      "version": "1.15.1",
+      "file_name": "cffi-1.15.1-cp311-cp311-emscripten_3_1_32_wasm32.whl",
+      "install_dir": "site",
+      "sha256": "338878901ac68d2956cfdd87f6d9ef97625232427060d1c307bb324f89bfaf52",
+      "package_type": "package",
+      "imports": ["cffi"],
+      "depends": ["pycparser"]
+    },
+    "pycparser": {
+      "name": "pycparser",
+      "version": "2.21",
+      "file_name": "pycparser-2.21-py2.py3-none-any.whl",
+      "install_dir": "site",
+      "sha256": "506fd095f3796b8ee523dbef4ff64ec5d3cde5f5c8f19129b4d205db3411db38",
+      "package_type": "package",
+      "imports": ["pycparser"],
+      "depends": []
+    }
+  }
+}
