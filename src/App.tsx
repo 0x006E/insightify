@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { createRef, useEffect, useMemo, useState } from 'react';
 import reactLogo from './assets/react.svg';
 
 function App() {
-  const [count, setCount] = useState<string[]>([]);
   const parser: Worker = useMemo(() => new Worker(new URL('./lib/worker.ts', import.meta.url), { type: 'module' }), []);
-
+  const [result, setResult] = useState<string>('');
+  const logRef = createRef<HTMLDivElement>();
   useEffect(() => {
     if (window.Worker) {
       parser.postMessage('');
@@ -13,11 +13,17 @@ function App() {
 
   useEffect(() => {
     if (window.Worker) {
-      parser.onmessage = (e: MessageEvent<{ result: string; _parsed: Record<string, string> }>) => {
-        setCount((prev) => [...prev, e.data._parsed ? JSON.stringify(e.data._parsed) : e.data.result]);
+      parser.onmessage = (e: MessageEvent<{ result: string; parsed: string }>) => {
+        if (e.data.result === 'Exit') {
+          setResult(e.data.parsed);
+          parser.terminate();
+          console.log('Worker terminated');
+          return;
+        }
+        if (logRef.current !== null) logRef.current.innerText += `${e.data.parsed ? e.data.parsed : e.data.result}\n`;
       };
     }
-  }, [parser]);
+  }, [parser, logRef]);
 
   return (
     <>
@@ -30,9 +36,16 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
-      <div className="card">
-        <ul>{count.length > 0 && count.map((item, index) => <li key={index}>{item}</li>)}</ul>
-      </div>
+      <button
+        onClick={() => {
+          indexedDB.deleteDatabase('/wheels');
+          window.location.reload();
+        }}
+      >
+        Clear cache
+      </button>
+      <div className="card" ref={logRef}></div>
+      {result && <pre>{result}</pre>}
       <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </>
   );
