@@ -7,7 +7,7 @@
     "skipLibCheck": true,
 
     /* @ -> src/ */
-    "baseUrl": ".",
+    "baseUrl": "src",
     "paths": {
       "@/*": ["./*"]
     },

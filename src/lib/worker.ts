@@ -1,3 +1,4 @@
+import fetchProgress from 'fetch-progress';
 import { PyodideInterface, loadPyodide } from 'pyodide/pyodide.js';
 
 declare global {
@@ -69,7 +70,6 @@ const FILE_IO = (() => {
 let alreadyRunning = false;
 
 async function initialize() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   console.log = function (_message) {
     self.postMessage({ result: _message });
   };
@@ -87,10 +87,25 @@ async function initialize() {
   });
   await FILE_IO.initFS('/wheels');
   console.log('Mount path');
+  if (!self.pyodide.FS.analyzePath('/wheels/results').exists) {
+    console.log('results does not exist');
+    self.pyodide.FS.mkdir('/wheels/results');
+  }
   if (!self.pyodide.FS.analyzePath('/wheels/pdf_parser-1.0.0-py3-none-any.whl').exists) {
     console.log('wheels does not exist');
-    const zipPackage = await fetch('/wheels/wheels.zip');
-    const zipPackageData = await zipPackage.arrayBuffer();
+    const zipPackageData = await fetch('/wheels/wheels.zip')
+      .then(
+        fetchProgress({
+          onProgress(progress) {
+            self.postMessage({ type: 'progress', result: progress.transferred, total: progress.total });
+          },
+          onError(err) {
+            console.log(err);
+          },
+        }),
+      )
+      .then((response) => response.arrayBuffer())
+      .then((zipPackageData) => zipPackageData);
     console.log('Fetched wheels');
     self.pyodide.unpackArchive(zipPackageData, 'zip', { extractDir: '/wheels' });
     console.log('Unpacked wheels');
@@ -107,23 +122,24 @@ async function initialize() {
 
 const initialized = initialize();
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-self.onmessage = async function (_e) {
+self.onmessage = async function (e: MessageEvent<{ file: string; pages: string }>) {
   await initialized;
+  const { file: uri, pages } = e.data;
   if (alreadyRunning) {
     return;
   }
   alreadyRunning = true;
   self.postMessage({ result: 'Fetching file' });
-  const file = await fetch('/r.pdf');
+  const file = await fetch(uri);
   const fileData = await file.arrayBuffer();
   const arrayBufferView = new Uint8Array(fileData);
   self.pyodide.FS.writeFile('/result.pdf', arrayBufferView);
   self.postMessage({ result: 'File fetched' });
   console.log('Pyodide is ready');
-  const parser = self.pyodide.pyimport('pdf_parser');
   await self.pyodide.runPythonAsync(`
+  from pdf_parser import parse_pdf
   import logging
+  from json import dumps
   logger = logging.getLogger()
   camelotLogger = logging.getLogger('camelot')
   formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
@@ -132,8 +148,33 @@ self.onmessage = async function (_e) {
   camelotLogger.handlers.clear()
   logger.addHandler(consoleHandler)
   logger.setLevel(logging.INFO)
+
 `);
-  const _parsed = parser.parse_pdf('/result.pdf');
-  self.postMessage({ result: 'Exit', parsed: JSON.stringify(_parsed.toJs()) });
+  const parser = self.pyodide.runPython(`
+  from json import dumps,loads
+  import os
+  from pathlib import Path
+  os.chdir('/wheels/results')
+
+  def parse(file_path, file_name=None, pages="1-end", merge_tables=False, final_data_path=None):
+    if file_name is None:
+      file_name = Path(file_path).stem + ".json"
+    else:
+      file_name = os.path.basename(file_name)
+    if final_data_path is not None and merge_tables is True:
+      with open(final_data_path) as f:
+        final_data = loads(f.read())
+    else:
+      final_data = {}
+    json_object = dumps(parse_pdf(file_path, pages=str(pages), final_data=final_data))
+    with open(file_name, "w") as outfile:
+      outfile.write(json_object)
+    return Path(file_name).absolute().as_posix()
+  parse
+  `);
+  const json = parser.callKwargs('/result.pdf', { pages: pages === '' ? '1-end' : pages });
+  const result_js = self.pyodide.FS.readFile(json, { encoding: 'utf8' });
+  parser.destroy();
+  self.postMessage({ result: 'Exit', parsed: JSON.parse(result_js) });
   alreadyRunning = false;
 };

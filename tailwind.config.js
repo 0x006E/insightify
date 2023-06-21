@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
 const { fontFamily } = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
@@ -72,5 +73,6 @@ export default {
       },
     },
   },
+  // eslint-disable-next-line no-undef
   plugins: [require('tailwindcss-animate')],
 };
