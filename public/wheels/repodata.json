@@ -2,7 +2,7 @@
   "info": {
     "arch": "wasm32",
     "platform": "emscripten_3_1_32",
-    "version": "0.23.2",
+    "version": "0.23.3",
     "python": "3.11.2"
   },
   "packages": {
