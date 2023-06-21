@@ -8,7 +8,13 @@ import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 
 function App() {
-  const parser: Worker = useMemo(() => new Worker(new URL('./lib/worker.ts', import.meta.url)), []);
+  const parser: Worker = useMemo(
+    () =>
+      new Worker(new URL('./lib/worker.ts', import.meta.url), {
+        /* @vite-ignore */ type: import.meta.env.PROD ? 'classic' : 'module',
+      }),
+    [],
+  );
   const [result, setResult] = useState<Record<string, never>>();
   const [file, setFile] = useState<File | null>();
   const [pages, setPages] = useState<string>('');
