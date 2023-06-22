@@ -10,6 +10,7 @@ const WorkerProvider = ({ children }: { children: React.ReactNode }) => {
   return <WorkerContext.Provider value={worker}>{children}</WorkerContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWorker = () => {
   const context = React.useContext(WorkerContext);
   if (context === undefined) {

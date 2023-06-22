@@ -7,6 +7,18 @@ declare global {
   }
 }
 
+export enum WorkerMessageType {
+  LOG = 'LOG',
+  ERROR = 'ERROR',
+  WARN = 'WARN',
+  PROGRESS = 'PROGRESS',
+  RESULT = 'RESULT',
+}
+export interface WorkerMessage {
+  type: 'LOG' | 'ERROR' | 'WARN' | 'PROGRESS' | 'RESULT';
+  data: string | number | Record<string, unknown>;
+}
+
 const { fetch: originalFetch } = self;
 
 self.fetch = async (...args) => {
@@ -32,8 +44,6 @@ self.fetch = async (...args) => {
 };
 
 const FILE_IO = (() => {
-  'use strict';
-
   function closeFS() {
     return new Promise((resolve, reject) => {
       self.pyodide.FS.syncfs(false, (err: Error) => {
@@ -71,18 +81,18 @@ let alreadyRunning = false;
 
 async function initialize() {
   console.log = function (_message) {
-    self.postMessage({ result: _message });
+    self.postMessage({ type: WorkerMessageType.LOG, data: _message });
   };
   console.error = function (_message) {
-    self.postMessage({ result: _message });
+    self.postMessage({ type: WorkerMessageType.ERROR, data: _message });
   };
   console.warn = function (_message) {
-    self.postMessage({ result: _message });
+    self.postMessage({ type: WorkerMessageType.WARN, data: _message });
   };
   self.pyodide = await loadPyodide({
     indexURL: '/wheels',
-    stdout: (text) => self.postMessage({ result: text }),
-    stderr: (text) => self.postMessage({ result: text }),
+    stdout: (text) => console.log(text),
+    stderr: (text) => console.error(text),
     fullStdLib: false,
   });
   await FILE_IO.initFS('/wheels');
@@ -97,7 +107,10 @@ async function initialize() {
       .then(
         fetchProgress({
           onProgress(progress) {
-            self.postMessage({ type: 'progress', result: progress.transferred, total: progress.total });
+            self.postMessage({
+              type: WorkerMessageType.PROGRESS,
+              data: { result: progress.transferred, total: progress.total },
+            });
           },
           onError(err) {
             console.log(err);
@@ -116,8 +129,11 @@ async function initialize() {
     '/wheels/cffi-1.15.1-cp311-cp311-emscripten_3_1_32_wasm32.whl,/wheels/chardet-5.1.0-py3-none-any.whl,/wheels/charset_normalizer-3.1.0-py3-none-any.whl,/wheels/click-8.1.3-py3-none-any.whl,/wheels/cryptography-39.0.2-cp311-cp311-emscripten_3_1_32_wasm32.whl,/wheels/dpath-2.1.6-py3-none-any.whl,/wheels/et_xmlfile-1.1.0-py3-none-any.whl,/wheels/numpy-1.24.2-cp311-cp311-emscripten_3_1_32_wasm32.whl,/wheels/opencv_python-4.7.0.72-cp311-cp311-emscripten_3_1_32_wasm32.whl,/wheels/openpyxl-3.1.2-py2.py3-none-any.whl,/wheels/pandas-1.5.3-cp311-cp311-emscripten_3_1_32_wasm32.whl,/wheels/pdfminer.six-20221105-py3-none-any.whl,/wheels/pycparser-2.21-py2.py3-none-any.whl,/wheels/PyMuPDF-1.22.3-cp311-cp311-emscripten_3_1_32_wasm32.whl,/wheels/pypdf-3.9.1-py3-none-any.whl,/wheels/python_dateutil-2.8.2-py2.py3-none-any.whl,/wheels/pytz-2023.3-py2.py3-none-any.whl,/wheels/six-1.16.0-py2.py3-none-any.whl,/wheels/tabulate-0.9.0-py3-none-any.whl,/wheels/camelot_fork-0.20.1-py3-none-any.whl,/wheels/pdf_parser-1.0.0-py3-none-any.whl';
   const packagePaths = packages.split(',').map((p) => `emfs://${p}`);
   for (const pkg of packagePaths) {
-    await self.pyodide.loadPackage(pkg, { messageCallback: (text) => self.postMessage({ result: text }) });
+    await self.pyodide.loadPackage(pkg, {
+      messageCallback: (text) => console.log(text),
+    });
   }
+  console.log('Pyodide is ready');
 }
 
 const initialized = initialize();
@@ -129,13 +145,12 @@ self.onmessage = async function (e: MessageEvent<{ file: string; pages: string }
     return;
   }
   alreadyRunning = true;
-  self.postMessage({ result: 'Fetching file' });
+  console.log('Fetching file');
   const file = await fetch(uri);
   const fileData = await file.arrayBuffer();
   const arrayBufferView = new Uint8Array(fileData);
   self.pyodide.FS.writeFile('/result.pdf', arrayBufferView);
-  self.postMessage({ result: 'File fetched' });
-  console.log('Pyodide is ready');
+  console.log('File written');
   await self.pyodide.runPythonAsync(`
   from pdf_parser import parse_pdf
   import logging
@@ -175,6 +190,6 @@ self.onmessage = async function (e: MessageEvent<{ file: string; pages: string }
   const json = parser.callKwargs('/result.pdf', { pages: pages === '' ? '1-end' : pages });
   const result_js = self.pyodide.FS.readFile(json, { encoding: 'utf8' });
   parser.destroy();
-  self.postMessage({ result: 'Exit', parsed: JSON.parse(result_js) });
+  self.postMessage({ type: WorkerMessageType.RESULT, data: JSON.parse(result_js) });
   alreadyRunning = false;
 };
