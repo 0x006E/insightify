@@ -1,20 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { createRef, useEffect, useMemo, useState } from 'react';
+import { createRef, useEffect, useState } from 'react';
 import { JsonView, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
-import reactLogo from './assets/react.svg';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 
 function App() {
-  const parser: Worker = useMemo(
-    () =>
-      new Worker(new URL('./lib/worker.ts', import.meta.url), {
-        /* @vite-ignore */ type: import.meta.env.PROD ? 'classic' : 'module',
-      }),
-    [],
-  );
   const [result, setResult] = useState<Record<string, never>>();
   const [file, setFile] = useState<File | null>();
   const [pages, setPages] = useState<string>('');
@@ -47,25 +39,8 @@ function App() {
   }, [parser, logRef]);
 
   return (
-    <div className="p-4">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
+    <div className="p-4 flex-1">
       <h1>Vite + React</h1>
-      <Button
-        variant="outline"
-        onClick={() => {
-          indexedDB.deleteDatabase('/wheels');
-          window.location.reload();
-        }}
-      >
-        Clear cache
-      </Button>
       <div className="grid w-full max-w-sm items-center gap-1.5">
         <Label htmlFor="picture">File</Label>
         <div className="w-full max-w-sm items-center space-x-2 p-2">
